@@ -1,3 +1,4 @@
+import cv2
 import pyttsx3 #pip install pyttsx3
 import speech_recognition as sr #pip install speechRecognition
 import datetime
@@ -68,6 +69,11 @@ def note(text):
 
     subprocess.Popen(["notepad.exe", file_name])
 
+def show_image():
+    img = cv2.imread("space.jpg")
+    cv2.imshow("Space Image",img)
+    cv2.waitKey(0)
+
 if __name__ == "__main__":
     wishMe()
 
@@ -97,7 +103,7 @@ if __name__ == "__main__":
 
         PLAY_MUSIC = ["play music","start music","music please","music"]
         for phrase in PLAY_MUSIC:
-            if phrase in text:
+            if phrase in query:
                 speak("Playing...")             
                 path="C:/Users/shankar/Desktop/python/jarvis/songs/"
                 files=os.listdir(path)
@@ -105,7 +111,7 @@ if __name__ == "__main__":
                 os.startfile("C:/Users/shankar/Desktop/python/jarvis/songs/" + d)
             
 
-        elif 'the time' in query:
+        if 'the time' in query:
             strTime = datetime.datetime.now().strftime("%H:%M:%S")    
             speak(f"Sir, the time is {strTime}")
 
@@ -140,3 +146,9 @@ if __name__ == "__main__":
                 note_text = takeCommand()
                 note(note_text)
                 speak("I've made a note of that.")
+
+        PICTURE = ["analyse image","show me picture","picture","image"]
+        for phrase in PICTURE:
+            if phrase in query == PICTURE[1]:
+                speak("Analysing..")
+                show_image()
