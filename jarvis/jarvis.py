@@ -8,6 +8,8 @@ import os
 import smtplib
 import subprocess
 import random
+from playsound import playsound
+import time
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
@@ -43,13 +45,15 @@ def takeCommand():
         audio = r.listen(source)
 
     try:
-        print("Recognizing...")    
+        speak("Recognizing...")  
+        print("Recognizing...")  
         query = r.recognize_google(audio, language='en-in')
         print(f"User said: {query}\n")
 
     except Exception as e:
         # print(e)    
-        print("Say that again please...")  
+        speak("Say that again please...")  
+        print("Say that again please")
         return "None"
     return query
 
@@ -70,9 +74,45 @@ def note(text):
     subprocess.Popen(["notepad.exe", file_name])
 
 def show_image():
-    img = cv2.imread("space.jpg")
+    img = cv2.imread("Photos/space.jpg")
     cv2.imshow("Space Image",img)
     cv2.waitKey(0)
+
+def video():
+    cap = cv2.VideoCapture(1)
+
+    while(True):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+
+        # Our operations on the frame come here
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Display the resulting frame
+        cv2.imshow('frame',frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+
+def countdown(t): 
+    
+    while t: 
+        mins, secs = divmod(t, 60) 
+        timer = '{:02d}:{:02d}'.format(mins, secs) 
+        print(timer, end="\r") 
+        time.sleep(1) 
+        t -= 1
+
+    playsound('Music/Bomb Timer.mp3')
+  
+  
+# input time in seconds 
+t = speak(input("Enter the time in seconds: "))
+
+
 
 if __name__ == "__main__":
     wishMe()
@@ -80,6 +120,12 @@ if __name__ == "__main__":
     while True:
     # if 1:
         query = takeCommand().lower()
+
+        WHO = ["who are you","what are you"]
+        for phrase in WHO:
+            if phrase in query:
+                playsound("Music/kill bill pandey.mp3")
+                pass
 
         WIKIPEDIA = ["wikipedia","who","what"]
         for phrase in WIKIPEDIA:
@@ -91,29 +137,35 @@ if __name__ == "__main__":
                     print(results)
                     speak(results)
 
-        YOUTUBE = ["open youtube","i want to watch videos","i want to watch movies"]
+        YOUTUBE = ["open youtube","i want to watch videos","i want to watch movies","open YouTube"]
         for phrase in YOUTUBE:
             if phrase in query:
                     webbrowser.open("https://www.youtube.com/")
 
-        GOOGLE = ["open google","search"]
+        GOOGLE = ["open google","search","open Google"]
         for phrase in GOOGLE:
             if phrase in query:
                 webbrowser.open("https://www.google.com/")
+
+        NEVERSKIP = ["open neverskip","neverskip"]
+        for phrase in NEVERSKIP:
+            if phrase in query:
+                webbrowser.open("https://parent.neverskip.com/#/auth/login")
 
         PLAY_MUSIC = ["play music","start music","music please","music"]
         for phrase in PLAY_MUSIC:
             if phrase in query:
                 speak("Playing...")             
-                path="C:/Users/shankar/Desktop/python/jarvis/songs/"
+                path="C:/Users/TS/Music/telugu songs/"
                 files=os.listdir(path)
                 d=random.choice(files)
-                os.startfile("C:/Users/shankar/Desktop/python/jarvis/songs/" + d)
+                os.startfile(path + d)
             
-
-        if 'the time' in query:
-            strTime = datetime.datetime.now().strftime("%H:%M:%S")    
-            speak(f"Sir, the time is {strTime}")
+        TIME = ["what is the time","time"]
+        for phrase in TIME:
+            if phrase in query:
+                strTime = datetime.datetime.now().strftime("%H:%M:%S")    
+                speak(f"The time is {strTime}")
 
         CODE = ["open code","i want to code","open visual studio code","code"]
         for phrase in CODE:
@@ -149,6 +201,28 @@ if __name__ == "__main__":
 
         PICTURE = ["analyse image","show me picture","picture","image"]
         for phrase in PICTURE:
-            if phrase in query == PICTURE[1]:
+            if phrase in query:
                 speak("Analysing..")
                 show_image()
+
+        VIDEO = ["open camera","analyse video","video"]
+        for phrase in VIDEO:
+            if phrase in query:
+                speak("Analysing..")
+                video()
+
+        STOP = ["stop","break"]
+        for phrase in STOP:
+            if phrase in query:
+                break
+                speak("Shutting....")
+
+        COMMAND = ["open command prompt","open cmd"]
+        for phrase in COMMAND:
+            if phrase in query:
+                subprocess.Popen(["cmd.exe"])
+
+        TIMER = ["set a timer","start the countdown","timer"]
+        for phrase in TIMER:
+            if phrase in query:
+                countdown(int(t))
