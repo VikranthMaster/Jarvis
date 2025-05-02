@@ -6,10 +6,12 @@ import wikipedia #pip install wikipedia
 import webbrowser
 import os
 import smtplib
+from email.message import EmailMessage
 import subprocess
-import random
+import pygame
 from playsound import playsound
 import time
+import yt_dlp
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
@@ -57,14 +59,6 @@ def takeCommand():
         return "None"
     return query
 
-def sendEmail(to, content):
-    server = smtplib.SMTP('smtp.gmail.com') 
-    server.ehlo()
-    server.starttls()
-    server.login("TestEmailVik@gmail.com","vikranth@master")
-    server.sendmail("TestEmailVik@gmail.com",to, content)
-    server.close()
-
 def note(text):
     date = datetime.datetime.now()
     file_name = str(date).replace(":", "-") + "-note.txt"
@@ -79,23 +73,21 @@ def show_image():
     cv2.waitKey(0)
 
 def video():
-    cap = cv2.VideoCapture(1)
-
-    while(True):
-        # Capture frame-by-frame
-        ret, frame = cap.read()
-
-        # Our operations on the frame come here
+    face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+    cap = cv2.VideoCapture(0)
+    while True:
+        ret, frame = cap.read()        
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        # Display the resulting frame
-        cv2.imshow('frame',frame)
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)        
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)        
+        cv2.imshow("Face Detection", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # When everything done, release the capture
     cap.release()
     cv2.destroyAllWindows()
+
 
 def countdown(t): 
     
@@ -109,23 +101,41 @@ def countdown(t):
     playsound('Music/Bomb Timer.mp3')
   
   
-# input time in seconds 
-t = speak(input("Enter the time in seconds: "))
+def get_video_url(song_name):
+    ydl_opts = {
+        'quiet': True,  # Suppress output
+        'extract_flat': True,  # Only get video URL without downloading
+        'force_generic_extractor': True,  # Use generic extractor
+    }
 
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        result = ydl.extract_info(f"ytsearch:{song_name}", download=False)
+        if 'entries' in result:
+            video_url = result['entries'][0]['url']  # Get the URL of the first result
+            return video_url
+        return None
+
+def playmusic(query):
+    url = get_video_url(query)
+    os.system(f"yt-dlp -f bestaudio -o - {url} | ffplay -nodisp -autoexit -loglevel quiet -")
+    
+    
 
 
 if __name__ == "__main__":
     wishMe()
 
     while True:
-    # if 1:
         query = takeCommand().lower()
 
         WHO = ["who are you","what are you"]
         for phrase in WHO:
             if phrase in query:
-                playsound("Music/kill bill pandey.mp3")
-                pass
+                pygame.mixer.init()
+                pygame.mixer.music.load("kill_bill_pandey.mp3")
+                pygame.mixer.music.play()
+                while pygame.mixer.music.get_busy():
+                    pygame.time.Clock().tick(10)
 
         WIKIPEDIA = ["wikipedia","who","what"]
         for phrase in WIKIPEDIA:
@@ -151,15 +161,6 @@ if __name__ == "__main__":
         for phrase in NEVERSKIP:
             if phrase in query:
                 webbrowser.open("https://parent.neverskip.com/#/auth/login")
-
-        PLAY_MUSIC = ["play music","start music","music please","music"]
-        for phrase in PLAY_MUSIC:
-            if phrase in query:
-                speak("Playing...")             
-                path="C:/Users/TS/Music/telugu songs/"
-                files=os.listdir(path)
-                d=random.choice(files)
-                os.startfile(path + d)
             
         TIME = ["what is the time","time"]
         for phrase in TIME:
@@ -171,18 +172,37 @@ if __name__ == "__main__":
         for phrase in CODE:
             if phrase in query:
                 speak("Opening....")
-                subprocess.Popen("C:/Users/shankar/AppData/Local/Programs/Microsoft VS Code/Code.exe")
+                os.system("code")
 
-        # elif 'email to vikranth' in query:
-        #     try:
-        #         speak("What Should i say?")
-        #         takeCommand()
-        #         to = "vikrantht32@gmail.com"
-        #         sendEmail(to, content)
-        #         speak("Email has been sent")
-        #     except Exception as e:
-        #         print(e)
-        #         speak("Sorry i am not able to send this email")
+        
+        EMAIL = ["email", "mail someone","mail"]
+        for phrase in EMAIL:
+            if phrase in query:
+                speak("Whom do you want to send email")
+                name = input("Enter email: ")
+                speak("What do you want me to send")
+                content = takeCommand()
+                msg = EmailMessage()
+                msg["Subject"] = "Email Python Bot"
+                msg["From"] = "greninjaa90@gmail.com"
+                msg["To"] = name
+                msg.set_content(content)
+                
+                smtp_server = 'smtp.gmail.com'
+                smtp_port = 587
+                email = "greninjaa90@gmail.com"
+                app_pass = "subd gvqz samk ffuu"
+
+                try:
+                    with smtplib.SMTP(smtp_server, smtp_port) as server:
+                        server.starttls()
+                        server.login(email, app_pass)
+                        server.send_message(msg)
+
+                    speak("Message sent successfully")
+                    continue
+                except:
+                    speak("Sorry there was problem in sending..Try again")
         
         DATE = ["what is the date","date","what's the date today"]
         for phrase in DATE:
@@ -214,10 +234,10 @@ if __name__ == "__main__":
         STOP = ["stop","break"]
         for phrase in STOP:
             if phrase in query:
-                break
                 speak("Shutting....")
+                break
 
-        COMMAND = ["open command prompt","open cmd"]
+        COMMAND = ["open command","open cmd"]
         for phrase in COMMAND:
             if phrase in query:
                 subprocess.Popen(["cmd.exe"])
@@ -225,4 +245,14 @@ if __name__ == "__main__":
         TIMER = ["set a timer","start the countdown","timer"]
         for phrase in TIMER:
             if phrase in query:
+                speak("Enter time")
+                t = takeCommand()
                 countdown(int(t))
+                
+        SONGS = ["play music","start music","music please","music", "play song","song"]
+        for phrase in SONGS:
+            if phrase in query:
+                speak("which song do you want me to play sir")
+                content = takeCommand()
+                playmusic(content)
+                continue
